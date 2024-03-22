@@ -1,5 +1,5 @@
 const tabla = document.getElementById('tabla');
-
+let paises = [];
 function traerPaisesUrl() {
     // Traemos todos los paises
     fetch('https://restcountries.com/v3.1/all')
@@ -12,18 +12,21 @@ function traerPaisesUrl() {
             // Iteramos cada pais
             data.forEach((pais, index) => {
                 // Si el pais tiene nombre se carga, si no tiene es omitido
-                if (pais.altSpellings[1]) {
+                if (pais.name.common) {
                     let paisDB = {
                         codigo: index,
                         nombre: pais.altSpellings[1],
                         capital: pais.capital,
                         region: pais.region,
-                        poblacion: pais.poblation,
+                        poblacion: parseInt(pais.population, 10),
                         latitud: pais.latlng[0],
                         longitud: pais.latlng[1]
                     };
                     // Vamos acumulando los países que están con la info completa
-                    paises.push(paisDB);
+                    if (paisDB.nombre) {
+                        paises.push(paisDB);
+
+                    }
                 }
             });
             fetch('cargar-paises', {
@@ -45,6 +48,8 @@ function traerPaisesUrl() {
         });
 }
 
+traerPaisesUrl();
+
 function llenarTabla() {
     fetch('/buscar-paises', {
         method: 'GET',
@@ -60,7 +65,7 @@ function llenarTabla() {
                 data.forEach(pais => {
                     mostrarPaisEnTabla(pais, tabla);
                 });
-            } else {
+            } else if (data.length === 1) {
                 mostrarPaisEnTabla(data, tabla);
             }
         })
@@ -110,6 +115,7 @@ function mostrarPaisEnTabla(pais, tabla) {
 function buscar() {
     let nombre = document.getElementById('nombre').value;
     let region = document.getElementById('region').value;
+    let regionCheckBox = document.getElementById('omitirRegion');
     let poblacionMin = document.getElementById('poblacion-min').value;
     let poblacionMax = document.getElementById('poblacion-max').value;
 
@@ -126,16 +132,24 @@ function buscar() {
     if (nombre) {
         buscarDB('nombre', nombre);
     } else if (poblacionMin && region) {
-        buscarDB('poblacionYRegion', poblacionRegion);
+        if (region.trim() !== '') {
+            buscarDB('poblacionYRegion', poblacionRegion);
+        } else {
+            buscarDB('poblacionMin', poblacionMin);
+        }
+    } else if (region && regionCheckBox.checked) {
+        buscarDB('regionCheck', region);
     } else if (region) {
         buscarDB('region', region);
-    } else if (poblacionMax && poblacionMin) {
-        buscarDB('poblacionBetween', poblaciones);
+    }
+    else if (poblacionMax && poblacionMin) {
+        buscarDBVariosParametros('poblacionBetween', 'poblacionMin', poblacionMin, 'poblacionMax', poblacionMax);
     } else if (poblacionMax) {
         buscarDB('poblacionMax', poblacionMax);
     } else if (poblacionMin) {
         buscarDB('poblacionMin', poblacionMin);
     } else {
+        tabla.innerHTML = ''
         llenarTabla();
     }
 }
@@ -148,16 +162,51 @@ async function buscarDB(datoNecesario, parametro) {
     })
         .then(response => response.json())
         .then(data => {
-            tabla.innerHTML = '';
-            if (data.length > 1) {
-                data.forEach(pais => {
-                    mostrarPaisEnTabla(pais, tabla);
-                });
-            } else {
-                mostrarPaisEnTabla(data, tabla);
-            }
+            mostrarData(data);
         })
         .catch(error => {
         });
 }
 
+async function buscarDBVariosParametros(datoNecesario, nombreParametro1, parametro1, nombreParametro2, parametro2) {
+
+    await fetch('/buscar-por-' + datoNecesario + '?' + nombreParametro1 + '=' + parametro1 + '&' + nombreParametro2 + '=' + parametro2, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            mostrarData(data);
+        })
+        .catch(error => {
+        });
+}
+
+function mostrarData(data) {
+    tabla.innerHTML = '';
+    paises = data;
+    if (data.length > 1) {
+        data.forEach(pais => {
+            mostrarPaisEnTabla(pais, tabla);
+        });
+    } else {
+        mostrarPaisEnTabla(data, tabla);
+    }
+}
+
+async function ordenar() {
+    await fetch('/ordenar', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            mostrarData(data);
+        })
+        .catch(error => {
+        });
+}

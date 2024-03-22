@@ -9,13 +9,20 @@
 
 </head>
 
-<body>    
+<body>
     <div>
-        <input type="text" placeholder="Nombre del país" oninput="buscar()" id="nombre">
-        <input type="text" placeholder="Region del país" oninput="buscar()" id="region">
-        <input type="text" placeholder="Población mínima del país" oninput="buscar()" id="poblacion-min">
-        <input type="text" placeholder="Población máxima del país" oninput="buscar()" id="poblacion-max">
-        
+        <div>
+            <input type="text" placeholder="Nombre del país" oninput="buscar()" id="nombre">
+            <input type="text" placeholder="Población mínima del país" oninput="buscar()" id="poblacion-min">
+            <input type="text" placeholder="Población máxima del país" oninput="buscar()" id="poblacion-max">
+            <button onclick="ordenar()">Ordenar alfabeticamente</button>
+            <div style="display: flex; flex-direction: row; width: 700px; height: auto; margin-top: 25px;">
+                <input type="text" placeholder="Region del país" oninput="buscar()" id="region">
+                <input type="checkbox" id="omitirRegion" onclick="buscar()">
+                <label for="myCheckbox">Buscar todas las regiones menos la del input</label>
+            </div>
+        </div>
+
         <table>
             <thead>
                 <td>Codigo</td>

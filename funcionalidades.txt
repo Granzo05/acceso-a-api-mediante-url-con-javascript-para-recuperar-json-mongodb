@@ -1,0 +1,110 @@
+Descomentar //traerPaisesUrl() en script.js[48] para cargar DB;
+
+[x] Codifique un método que seleccione los documentos de la colección países donde la región sea
+    Americas. Muestre el resultado por pantalla o consola.
+
+[x] Codifique un método que seleccione los documentos de la colección países donde la región sea
+    Americas y la población sea mayor a 100000000. Muestre el resultado por pantalla o consola.
+[x] Codifique un método que seleccione los documentos de la colección países donde la región sea
+    distinto de Africa. (investigue $ne). Muestre el resultado por pantalla o consola.
+[x] Codifique un método que actualice el documento de la colección países donde el name sea Egypt,
+cambiando el name a “Egipto” y la población a 95000000
+    app.get('/buscar-paises', async (req, res) => {
+    const client = new MongoClient(url);
+
+    try {
+        const collection = await conectarDB(client);
+        const paises = await collection.find({}).toArray();
+        /*
+        paises.forEach(async pais => {
+            if (pais.nombre === 'Arab Republic of Egypt') {
+                const filtro = { _id: pais._id }; 
+                const actualizacion = { nombre: 'Egipto', poblacion: 95000000 }; 
+
+                await actualizarPais(filtro, actualizacion);
+            }
+        });
+        */
+        res.json(paises);
+    } catch (error) {
+        console.error('Error al buscar los países:', error);
+        res.status(500).json({ error: 'Error al buscar los países' });
+    } finally {
+        client.close();
+    }
+});
+
+[x] Codifique un método que elimine el documento de la colección países donde el código del país sea
+    258
+    
+        paises.forEach(async pais => {
+            if (pais.nombre === 'Arab Republic of Egypt') {
+                const filtro = { _id: pais._id }; 
+                const actualizacion = { nombre: 'Egipto', poblacion: 95000000 }; 
+
+                await actualizarPais(filtro, actualizacion);
+            } else if (pais.codigo === 258) {
+                await eliminarPais(pais);
+            } 
+        });
+
+[x] Describa que sucede al ejecutar el método drop() sobre una colección y sobre una base de datos.
+    Ejecutar drop() sobre una colección, elimina completamente esa colección de la base de datos.
+    Ejecutar dropDatabase() (que es el equivalente de drop() pero para una base de datos) 
+    sobre una base de datos, elimina completamente esa base de datos, incluidas todas las colecciones, 
+    índices, usuarios, roles y cualquier otro objeto asociado a esa base de datos.
+
+[x] Codifique un método que seleccione los documentos de la colección países cuya población sea
+mayor a 50000000 y menor a 150000000. Muestre el resultado por pantalla o consola.
+[x] Codifique un método que seleccione los documentos de la colección países ordenados por nombre
+(name) en forma Ascendente. sort(). Muestre el resultado por pantalla o consola.
+5.9. Describa que sucede al ejecutar el método skip() sobre una colección. Ejemplifique con la colección
+países.
+    Skip() sirve para modificar el orden en el que se extraen objetos dentro de un array, por ej
+    [
+        { "_id": 1, "nombre": "Argentina" },
+        { "_id": 2, "nombre": "Brasil" },
+        { "_id": 3, "nombre": "Chile" },
+        { "_id": 4, "nombre": "Colombia" },
+        { "_id": 5, "nombre": "Ecuador" },
+        { "_id": 6, "nombre": "Perú" },
+        { "_id": 7, "nombre": "Uruguay" }
+    ]
+
+    db.paises.find().skip(4); 
+    Esto va a devolver los valores con ID mayor a 4
+    [
+        { "_id": 5, "nombre": "Ecuador" },
+        { "_id": 6, "nombre": "Perú" },
+        { "_id": 7, "nombre": "Uruguay" }
+    ]
+
+5.10. Describa y ejemplifique como el uso de expresiones regulares en Mongo puede reemplazar
+el uso de la cláusula LIKE de SQL.
+    El uso de LIKE en SQL es el siguiente
+        SELECT * FROM Paises WHERE nombre LIKE 'Argentina%';
+    En cambio para conseguir el mismo resultado en Mongo se utiliza:
+    db.paises.find({ nombre: /^Argentina/ });
+
+5.11. Cree un nuevo índice para la colección países asignando el campo código como índice.
+investigue createIndex())
+
+    const collection = db.collection('países');
+
+    collection.createIndex({ codigo: 1 }, { unique: true, name: "codigo_index" });
+
+    // Confirmamos que el índice se creó correctamente
+    collection.indexes().then(indexes => {
+        console.log("Índices de la colección países:", indexes);
+    }).catch(err => {
+        console.error("Error al obtener los índices:", err);
+    });
+
+5.12. Describa como se realiza un backup de la base de datos mongo países_db.
+    - Utilizando mongodump
+
+    En la terminal utilizamos el comando mongodump para realizar el backup de la base de datos "países_db":
+
+    mongodump --db países_db
+
+    Esto creará un directorio llamado "dump" en el directorio actual con los archivos de backup de la base de datos.

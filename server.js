@@ -22,6 +22,7 @@ async function conectarDB(client) {
     try {
         await client.connect();
         const db = client.db(dbName);
+
         return db.collection(collectionName);
     } catch (error) {
         console.error('Error al conectar con la base de datos:', error);
@@ -35,6 +36,18 @@ app.get('/buscar-paises', async (req, res) => {
     try {
         const collection = await conectarDB(client);
         const paises = await collection.find({}).toArray();
+        /*
+        paises.forEach(async pais => {
+            if (pais.nombre === 'Arab Republic of Egypt') {
+                const filtro = { _id: pais._id }; 
+                const actualizacion = { nombre: 'Egipto', poblacion: 95000000 }; 
+
+                await actualizarPais(filtro, actualizacion);
+            } else if (pais.codigo === 258) {
+                await eliminarPais(pais);
+            } 
+        });
+        */
         res.json(paises);
     } catch (error) {
         console.error('Error al buscar los países:', error);
@@ -46,27 +59,69 @@ app.get('/buscar-paises', async (req, res) => {
 
 
 // Endpoint para guardar datos en la base de datos
-app.post('/cargar-paises', (req, res) => {
+app.post('/cargar-paises', async (req, res) => {
     const data = req.body;
     try {
-        insertarDatos(data);
+        await insertarDatos(data);
+        res.json({ message: 'Datos insertados correctamente' });
     } catch (err) {
         console.error(err);
+        res.status(500).json({ error: 'Error al insertar datos' });
     }
-
 });
 
 async function insertarDatos(datos) {
     const client = new MongoClient(url);
 
-    const collection = conectarDB(client);
     try {
+        const collection = await conectarDB(client);
+        collection.drop();
+
         await collection.insertMany(datos);
 
-        console.log('documentos insertados correctamente.');
+        console.log('Documentos insertados correctamente.');
 
     } catch (error) {
         console.error('Error al insertar datos:', error);
+        throw error;
+    } finally {
+        // Cerrar la conexión
+        await client.close();
+    }
+}
+
+async function actualizarPais(filtro, actualizacion) {
+    const client = new MongoClient(url);
+
+    try {
+        const collection = await conectarDB(client);
+
+        await collection.updateOne(filtro, { $set: actualizacion });
+
+        console.log('Documentos actualizado correctamente.');
+
+    } catch (error) {
+        console.error('Error al insertar datos:', error);
+        throw error;
+    } finally {
+        // Cerrar la conexión
+        await client.close();
+    }
+}
+
+async function eliminarPais(pais) {
+    const client = new MongoClient(url);
+
+    try {
+        const collection = await conectarDB(client);
+
+        await collection.deleteOne(pais);
+
+        console.log('Documentos eliminados correctamente.');
+
+    } catch (error) {
+        console.error('Error al insertar datos:', error);
+        throw error;
     } finally {
         // Cerrar la conexión
         await client.close();
@@ -115,7 +170,34 @@ async function buscarPorRegion(region) {
     try {
         const collection = await conectarDB(client);
         const paises = await collection.find({ region: region }).toArray();
-        console.log(region);
+
+        return paises;
+    } catch (error) {
+        console.error('Error al insertar datos:', error);
+    } finally {
+        // Cerrar la conexión
+        await client.close();
+    }
+}
+
+app.get('/buscar-por-regionCheck', async (req, res) => {
+    const region = req.query.regionCheck;
+
+    try {
+        const paises = await buscarPorRegionCheck(region);
+        res.json(paises);
+
+    } catch (error) {
+        console.error(error);
+    }
+});
+
+async function buscarPorRegionCheck(region) {
+    const client = new MongoClient(url);
+
+    try {
+        const collection = await conectarDB(client);
+        const paises = await collection.find({ region: { $ne: region } }).toArray();
         return paises;
     } catch (error) {
         console.error('Error al insertar datos:', error);
@@ -141,7 +223,7 @@ async function buscarPorPoblacionMin(poblacion) {
 
     try {
         const collection = await conectarDB(client);
-        const paises = await collection.find({ poblacion: { $gt: poblacion } }).toArray();
+        const paises = await collection.find({ poblacion: { $gt: parseInt(poblacion) } }).toArray();
         return paises;
     } catch (error) {
         console.error('Error al insertar datos:', error);
@@ -167,7 +249,7 @@ async function buscarPorPoblacionMax(poblacion) {
 
     try {
         const collection = await conectarDB(client);
-        const paises = await collection.find({ poblacion: { $lt: poblacion } }).toArray();
+        const paises = await collection.find({ poblacion: { $lt: parseInt(poblacion) } }).toArray();
         return paises;
     } catch (error) {
         console.error('Error al insertar datos:', error);
@@ -194,7 +276,8 @@ async function buscarPorPoblacionBetween(poblacionMin, poblacionMax) {
 
     try {
         const collection = await conectarDB(client);
-        const paises = await collection.find({ poblacion: { $gt: poblacionMin, $lt: poblacionMax } }).toArray();
+        const paises = await collection.find({ poblacion: { $gt: parseInt(poblacionMin), $lt: parseInt(poblacionMax) } }).toArray();
+
         return paises;
     } catch (error) {
         console.error('Error al insertar datos:', error);
@@ -207,8 +290,6 @@ async function buscarPorPoblacionBetween(poblacionMin, poblacionMax) {
 app.get('/buscar-por-poblacionYRegion', async (req, res) => {
     const poblacionMin = req.query.poblacionYRegion.poblacionMin;
     const region = req.query.poblacionYRegion;
-    console.log(poblacionMin)
-    console.log(region)
     try {
         const paises = await buscarPorPoblacionMinYRegion(poblacionMin, region);
         res.json(paises);
@@ -232,6 +313,40 @@ async function buscarPorPoblacionMinYRegion(poblacionMin, region) {
         await client.close();
     }
 }
+
+app.get('/ordenar', async (req, res) => {
+    try {
+        const paises = await ordenar();
+        insertarDatos(paises);
+        res.json(paises);
+    } catch (error) {
+        console.error(error);
+    }
+});
+
+
+async function ordenar() {
+    const client = new MongoClient(url);
+
+    try {
+        const collection = await conectarDB(client);
+        const paises = await collection.find({}).toArray();
+        
+        paises.sort((a, b) => {
+            if (a.nombre < b.nombre) return -1;
+            if (a.nombre > b.nombre) return 1;
+            return 0;
+        });
+
+        return paises;
+    } catch (error) {
+        console.error('Error al insertar datos:', error);
+    } finally {
+        // Cerrar la conexión
+        await client.close();
+    }
+}
+
 
 const PORT = process.env.PORT || 3000;
 
