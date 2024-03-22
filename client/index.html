@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio</title>
+    <link rel="stylesheet" href="./style.css">
+
+</head>
+
+<body>    
+    <div>
+        <input type="text" placeholder="Nombre del país" oninput="buscar()" id="nombre">
+        <input type="text" placeholder="Region del país" oninput="buscar()" id="region">
+        <input type="text" placeholder="Población mínima del país" oninput="buscar()" id="poblacion-min">
+        <input type="text" placeholder="Población máxima del país" oninput="buscar()" id="poblacion-max">
+        
+        <table>
+            <thead>
+                <td>Codigo</td>
+                <td>Nombre</td>
+                <td>Capital</td>
+                <td>Region</td>
+                <td>Poblacion</td>
+                <td>Latitud</td>
+                <td>Longitud</td>
+            </thead>
+            <tbody id="tabla">
+
+            </tbody>
+        </table>
+    </div>
+</body>
+
+<script src="./js/scripts.js"></script>
+
+</html>
